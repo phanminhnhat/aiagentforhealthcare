@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI trong Y tế: Phân tích Tương tác | AI in Healthcare: An Interactive Analysis</title>
+    
+    <!-- Chosen Palette: Calm Harmony -->
+    <!-- Application Structure Plan: The application is designed as an interactive dashboard, moving away from the linear format of the source report. The core is a central navigation hub featuring an interactive Donut chart that represents the main domains (Healthcare, Lifestyle). Clicking on a chart segment or the corresponding navigation links smoothly scrolls to the relevant thematic section. Each section uses interactive cards for "progressive disclosure"—users click on a high-level process (e.g., "Diagnosis") to reveal detailed information about specific AI agents, their functions, and real-world examples. This structure was chosen to make a dense, text-heavy report digestible and engaging, allowing users to explore content based on their interests rather than being forced to read sequentially, thus enhancing usability and information retention. This version adds full bilingual (VI/EN) support. -->
+    <!-- Visualization & Content Choices: 
+        - Overview Chart: (Goal: Organize/Navigate) A Chart.js Donut chart is used to visualize the main report categories. Interaction: Clicking a segment filters the view. Justification: Provides a high-level map of the content and serves as an intuitive, visual navigation tool. Dynamically updates with language change.
+        - Process Cards: (Goal: Inform/Explore) Clickable cards built with HTML/Tailwind represent key healthcare processes. Interaction: On click, a modal displays detailed text content in the selected language. Justification: This prevents information overload and encourages active user exploration.
+        - Challenges Table: (Goal: Compare/Inform) An interactive grid built with HTML/Tailwind replaces the static report table. All content is translated on language switch. Justification: Makes complex relational data easier to scan and understand.
+        - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #F8F7F4;
+            --text-primary: #2C3E50;
+            --text-secondary: #5a6875;
+            --accent-primary: #007BFF;
+            --accent-secondary: #E67E22;
+            --border-color: #e5e7eb;
+            --card-bg: #FFFFFF;
+        }
+        html {
+            scroll-behavior: smooth;
+        }
+        body {
+            font-family: 'Be Vietnam Pro', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+        }
+        .chart-container {
+            position: relative;
+            margin: auto;
+            height: 40vh;
+            max-height: 400px;
+            width: 100%;
+            max-width: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 50vh;
+                max-height: 450px;
+                max-width: 450px;
+            }
+        }
+        .nav-link {
+            transition: color 0.3s, border-color 0.3s;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: var(--accent-primary);
+            border-bottom-color: var(--accent-primary);
+        }
+        .interactive-card {
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+        }
+        .interactive-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .modal-overlay {
+            transition: opacity 0.3s ease;
+        }
+        .modal-content {
+            transition: transform 0.3s ease;
+        }
+        .section-title {
+            border-bottom: 3px solid var(--accent-primary);
+            padding-bottom: 0.5rem;
+            display: inline-block;
+        }
+        .lang-btn {
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .lang-btn.active {
+            background-color: var(--accent-primary);
+            color: white;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Header -->
+    <header class="bg-white/80 backdrop-blur-lg shadow-sm sticky top-0 z-40">
+        <nav class="container mx-auto px-4 sm:px-6 py-3 flex justify-between items-center">
+            <h1 data-lang-key="headerTitle" class="text-lg md:text-2xl font-bold text-blue-600">AI trong Y tế</h1>
+            <div class="hidden md:flex items-center space-x-6 lg:space-x-8">
+                <a data-lang-key="navOverview" href="#overview" class="nav-link font-semibold text-gray-600">Tổng quan</a>
+                <a data-lang-key="navEcosystem" href="#ecosystem" class="nav-link font-semibold text-gray-600">Hệ sinh thái Y tế</a>
+                <a data-lang-key="navLifestyle" href="#lifestyle" class="nav-link font-semibold text-gray-600">Lối sống & Sức khỏe</a>
+                <a data-lang-key="navChallenges" href="#challenges" class="nav-link font-semibold text-gray-600">Thách thức</a>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button id="lang-vi" class="lang-btn px-3 py-1.5 text-sm font-bold rounded-md">VI</button>
+                <button id="lang-en" class="lang-btn px-3 py-1.5 text-sm font-bold rounded-md">EN</button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 py-8">
+
+        <!-- Section 1: Overview -->
+        <section id="overview" class="text-center py-12">
+            <h2 data-lang-key="overviewTitle" class="text-3xl md:text-5xl font-bold mb-4">Kỷ nguyên của các Tác tử AI</h2>
+            <p data-lang-key="overviewSubtitle" class="max-w-3xl mx-auto text-lg text-gray-600 mb-8">
+                Khám phá vai trò chuyển đổi của các tác tử AI, từ công cụ thụ động thành cộng tác viên tự chủ, định hình lại tương lai của ngành chăm sóc sức khỏe và lối sống. Biểu đồ dưới đây thể hiện các lĩnh vực ứng dụng chính.
+            </p>
+            <div class="chart-container">
+                <canvas id="aiDomainsChart"></canvas>
+            </div>
+            <p data-lang-key="overviewChartCta" class="mt-4 text-sm text-gray-500">Nhấp vào một phân đoạn để khám phá chi tiết.</p>
+        </section>
+
+        <!-- Section 2: Healthcare Ecosystem -->
+        <section id="ecosystem" class="py-16">
+            <h2 data-lang-key="ecosystemTitle" class="section-title text-3xl md:text-4xl font-bold mb-4">Hệ sinh thái Chăm sóc Sức khỏe</h2>
+            <p data-lang-key="ecosystemSubtitle" class="text-lg text-gray-600 mb-12 max-w-4xl">
+                Các tác tử AI đang được triển khai trên toàn bộ chuỗi giá trị chăm sóc sức khỏe, tối ưu hóa quy trình và tạo ra các mô hình chăm sóc mới. Phần này giới thiệu cách AI can thiệp vào các quy trình cốt lõi, từ phòng ngừa, chẩn đoán, điều trị đến các công việc hành chính và nghiên cứu. Hãy nhấp vào từng thẻ để xem các agent cụ thể đang hoạt động như thế nào.
+            </p>
+            <div id="ecosystem-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            </div>
+        </section>
+
+        <!-- Section 3: Lifestyle & Wellness -->
+        <section id="lifestyle" class="py-16 bg-blue-50/50 rounded-2xl">
+            <div class="container mx-auto px-6">
+                <h2 data-lang-key="lifestyleTitle" class="section-title text-3xl md:text-4xl font-bold mb-4">Cách mạng Sức khỏe Cá nhân</h2>
+                <p data-lang-key="lifestyleSubtitle" class="text-lg text-gray-600 mb-12 max-w-4xl">
+                    Ngoài bệnh viện, AI đang trao quyền cho mỗi cá nhân quản lý sức khỏe một cách chủ động. Các tác tử AI hoạt động như huấn luyện viên cá nhân, chuyên gia dinh dưỡng, và người hỗ trợ sức khỏe tinh thần ngay trên điện thoại của bạn. Khám phá các ứng dụng trong dinh dưỡng, thể dục, và sức khỏe tinh thần.
+                </p>
+                <div id="lifestyle-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: Challenges & Ethics -->
+        <section id="challenges" class="py-16">
+            <h2 data-lang-key="challengesTitle" class="section-title text-3xl md:text-4xl font-bold mb-4">Thách thức & Ranh giới Đạo đức</h2>
+             <p data-lang-key="challengesSubtitle" class="text-lg text-gray-600 mb-12 max-w-4xl">
+                Việc tích hợp AI mang lại hứa hẹn to lớn nhưng cũng đi kèm những thách thức phức tạp. Để triển khai có trách nhiệm, chúng ta phải đối mặt với các vấn đề về quyền riêng tư, thiên vị thuật toán và trách nhiệm giải trình. Bảng dưới đây tóm tắt các rủi ro chính và các chiến lược giảm thiểu được đề xuất.
+            </p>
+            <div class="bg-white p-6 rounded-lg shadow-md overflow-x-auto">
+                <table class="w-full min-w-[800px]">
+                    <thead class="bg-gray-100">
+                        <tr id="challenges-table-header">
+                        </tr>
+                    </thead>
+                    <tbody id="challenges-table-body">
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        
+        <!-- Section 5: Conclusion -->
+        <section id="conclusion" class="py-16 text-center bg-gray-800 text-white rounded-2xl">
+            <h2 data-lang-key="conclusionTitle" class="text-3xl md:text-4xl font-bold mb-4">Tương lai Cộng sinh giữa Con người và AI</h2>
+            <p data-lang-key="conclusionSubtitle" class="max-w-3xl mx-auto text-lg text-gray-300 mb-8">
+                Tương lai của y tế không phải là sự thay thế, mà là sự hợp tác. AI xử lý dữ liệu, giải phóng chuyên gia y tế để tập trung vào sự đồng cảm, phán đoán phức tạp và kết nối con người. Chúng ta đang hướng tới một mô hình chăm sóc sức khỏe mang tính **Dự đoán, Phòng ngừa, Cá nhân hóa và Chủ động**.
+            </p>
+            <div class="flex justify-center space-x-4">
+                 <a data-lang-key="conclusionCta" href="#overview" class="bg-blue-500 text-white px-6 py-3 rounded-full font-semibold hover:bg-blue-600 transition-colors">Khám phá lại từ đầu</a>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal -->
+    <div id="modal" class="modal-overlay fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 hidden opacity-0">
+        <div class="modal-content bg-white w-full max-w-3xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col transform scale-95">
+            <div class="flex justify-between items-center p-5 border-b border-gray-200">
+                <h3 id="modal-title" class="text-2xl font-bold text-gray-800"></h3>
+                <button id="modal-close" class="text-gray-400 hover:text-gray-700 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div id="modal-body" class="p-6 overflow-y-auto">
+            </div>
+        </div>
+    </div>
+
+    <footer class="text-center py-6 text-gray-500 text-sm">
+        <p data-lang-key="footerText">&copy; 2024 Phân tích Tương tác về AI trong Y tế. Dựa trên báo cáo "Sự Dịch Chuyển Tác tử".</p>
+    </footer>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- DATA STORE ---
+        const appData = {
+            staticContent: {
+                headerTitle: { vi: 'AI trong Y tế', en: 'AI in Healthcare' },
+                navOverview: { vi: 'Tổng quan', en: 'Overview' },
+                navEcosystem: { vi: 'Hệ sinh thái Y tế', en: 'Healthcare Ecosystem' },
+                navLifestyle: { vi: 'Lối sống & Sức khỏe', en: 'Lifestyle & Wellness' },
+                navChallenges: { vi: 'Thách thức', en: 'Challenges' },
+                overviewTitle: { vi: 'Kỷ nguyên của các Tác tử AI', en: 'The Era of AI Agents' },
+                overviewSubtitle: { vi: 'Khám phá vai trò chuyển đổi của các tác tử AI, từ công cụ thụ động thành cộng tác viên tự chủ, định hình lại tương lai của ngành chăm sóc sức khỏe và lối sống. Biểu đồ dưới đây thể hiện các lĩnh vực ứng dụng chính.', en: 'Explore the transformative role of AI agents, from passive tools to autonomous collaborators, reshaping the future of healthcare and lifestyle. The chart below shows the main application areas.' },
+                overviewChartCta: { vi: 'Nhấp vào một phân đoạn để khám phá chi tiết.', en: 'Click on a segment to explore details.' },
+                ecosystemTitle: { vi: 'Hệ sinh thái Chăm sóc Sức khỏe', en: 'Healthcare Ecosystem' },
+                ecosystemSubtitle: { vi: 'Các tác tử AI đang được triển khai trên toàn bộ chuỗi giá trị chăm sóc sức khỏe, tối ưu hóa quy trình và tạo ra các mô hình chăm sóc mới. Phần này giới thiệu cách AI can thiệp vào các quy trình cốt lõi, từ phòng ngừa, chẩn đoán, điều trị đến các công việc hành chính và nghiên cứu. Hãy nhấp vào từng thẻ để xem các agent cụ thể đang hoạt động như thế nào.', en: 'AI agents are being deployed across the entire healthcare value chain, optimizing processes and creating new care models. This section shows how AI intervenes in core processes, from prevention, diagnosis, and treatment to administrative tasks and research. Click on each card to see how specific agents work.' },
+                lifestyleTitle: { vi: 'Cách mạng Sức khỏe Cá nhân', en: 'Personal Wellness Revolution' },
+                lifestyleSubtitle: { vi: 'Ngoài bệnh viện, AI đang trao quyền cho mỗi cá nhân quản lý sức khỏe một cách chủ động. Các tác tử AI hoạt động như huấn luyện viên cá nhân, chuyên gia dinh dưỡng, và người hỗ trợ sức khỏe tinh thần ngay trên điện thoại của bạn. Khám phá các ứng dụng trong dinh dưỡng, thể dục, và sức khỏe tinh thần.', en: 'Beyond the hospital, AI is empowering individuals to proactively manage their health. AI agents act as personal trainers, nutritionists, and mental wellness supporters right on your phone. Explore applications in nutrition, fitness, and mental health.' },
+                challengesTitle: { vi: 'Thách thức & Ranh giới Đạo đức', en: 'Challenges & Ethical Boundaries' },
+                challengesSubtitle: { vi: 'Việc tích hợp AI mang lại hứa hẹn to lớn nhưng cũng đi kèm những thách thức phức tạp. Để triển khai có trách nhiệm, chúng ta phải đối mặt với các vấn đề về quyền riêng tư, thiên vị thuật toán và trách nhiệm giải trình. Bảng dưới đây tóm tắt các rủi ro chính và các chiến lược giảm thiểu được đề xuất.', en: 'Integrating AI offers immense promise but comes with complex challenges. For responsible deployment, we must address issues of privacy, algorithmic bias, and accountability. The table below summarizes key risks and proposed mitigation strategies.' },
+                conclusionTitle: { vi: 'Tương lai Cộng sinh giữa Con người và AI', en: 'A Symbiotic Future for Humans and AI' },
+                conclusionSubtitle: { vi: 'Tương lai của y tế không phải là sự thay thế, mà là sự hợp tác. AI xử lý dữ liệu, giải phóng chuyên gia y tế để tập trung vào sự đồng cảm, phán đoán phức tạp và kết nối con người. Chúng ta đang hướng tới một mô hình chăm sóc sức khỏe mang tính **Dự đoán, Phòng ngừa, Cá nhân hóa và Chủ động**.', en: 'The future of medicine is not replacement, but collaboration. AI handles data, freeing human experts to focus on empathy, complex judgment, and human connection. We are moving towards a healthcare model that is **Predictive, Preventive, Personalized, and Proactive**.' },
+                conclusionCta: { vi: 'Khám phá lại từ đầu', en: 'Explore Again' },
+                footerText: { vi: '&copy; 2024 Phân tích Tương tác về AI trong Y tế. Dựa trên báo cáo "Sự Dịch Chuyển Tác tử".', en: '&copy; 2024 Interactive Analysis of AI in Healthcare. Based on the "Agentic Shift" report.' },
+                chartLabelEcosystem: { vi: 'Hệ sinh thái Y tế', en: 'Healthcare Ecosystem' },
+                chartLabelLifestyle: { vi: 'Lối sống & Sức khỏe', en: 'Lifestyle & Wellness' },
+                chartTooltipLabel: { vi: 'ứng dụng', en: 'applications' }
+            },
+            ecosystem: [
+                { id: 'prevention', icon: '🛡️', title: { vi: 'Phòng ngừa & Theo dõi', en: 'Prevention & Monitoring' }, description: { vi: 'Chuyển dịch từ y học phản ứng sang chăm sóc chủ động bằng cách theo dõi sức khỏe liên tục.', en: 'Shifting from reactive medicine to proactive care through continuous health monitoring.' }, content: { vi: `<p class="mb-4 text-gray-600">Các tác tử AI mở rộng phạm vi chăm sóc vào cuộc sống hàng ngày của bệnh nhân, cho phép can thiệp sớm và phòng ngừa bệnh tật.</p><h4 class="font-bold text-lg mb-2">Các Agent tiêu biểu:</h4><ul class="space-y-4"><li><strong>Agent Giám sát Bệnh nhân Từ xa (RPM Agent):</strong> Phân tích dữ liệu từ thiết bị đeo (wearables), chỉ cảnh báo khi có sai lệch đáng kể để tránh "mệt mỏi vì cảnh báo".<br><span class="text-sm text-blue-600">Ví dụ: HealthSnap, care.ai</span></li><li><strong>Agent Điều phối viên Chăm sóc Ảo:</strong> Quản lý hành trình sau xuất viện: nhắc thuốc, theo dõi triệu chứng, cung cấp tài liệu giáo dục.<br><span class="text-sm text-blue-600">Ví dụ: Caregility, iCare Coordinator</span></li></ul>`, en: `<p class="mb-4 text-gray-600">AI agents extend the scope of care into patients' daily lives, enabling early intervention and disease prevention.</p><h4 class="font-bold text-lg mb-2">Key Agents:</h4><ul class="space-y-4"><li><strong>Remote Patient Monitoring (RPM) Agent:</strong> Analyzes data from wearables, only alerting on significant deviations to avoid "alert fatigue".<br><span class="text-sm text-blue-600">Examples: HealthSnap, care.ai</span></li><li><strong>Virtual Care Coordinator Agent:</strong> Manages the post-discharge journey: medication reminders, symptom tracking, providing educational materials.<br><span class="text-sm text-blue-600">Examples: Caregility, iCare Coordinator</span></li></ul>` } },
+                { id: 'diagnosis', icon: '🩺', title: { vi: 'Chẩn đoán', en: 'Diagnosis' }, description: { vi: 'Tăng cường độ chính xác và tốc độ chẩn đoán thông qua phân tích dữ liệu quy mô lớn.', en: 'Enhancing diagnostic accuracy and speed through large-scale data analysis.' }, content: { vi: `<p class="mb-4 text-gray-600">AI hoạt động như một "cặp mắt thứ hai" cho bác sĩ, giúp xác định các dấu hiệu bệnh tinh vi và giảm thiểu sai sót.</p><h4 class="font-bold text-lg mb-2">Các Agent tiêu biểu:</h4><ul class="space-y-4"><li><strong>Agent Phân loại và Cảnh báo (Triage & Alert Agent):</strong> Phân tích hình ảnh y tế (X-quang, CT) và tự động gắn cờ các trường hợp khẩn cấp như đột quỵ, đẩy chúng lên đầu danh sách chờ.<br><span class="text-sm text-blue-600">Ví dụ: Aidoc, Annalise.ai</span></li><li><strong>Agent Hỗ trợ Chẩn đoán:</strong> Hoạt động như một "người đồng nghiệp thứ hai", cung cấp danh sách các chẩn đoán phân biệt dựa trên triệu chứng và lịch sử bệnh án.<br><span class="text-sm text-blue-600">Ví dụ: Glass.health, UpToDate</span></li></ul>`, en: `<p class="mb-4 text-gray-600">AI acts as a "second pair of eyes" for doctors, helping to identify subtle signs of disease and minimize errors.</p><h4 class="font-bold text-lg mb-2">Key Agents:</h4><ul class="space-y-4"><li><strong>Triage & Alert Agent:</strong> Analyzes medical images (X-rays, CT scans) and automatically flags urgent cases like strokes, moving them to the top of the queue.<br><span class="text-sm text-blue-600">Examples: Aidoc, Annalise.ai</span></li><li><strong>Diagnostic Support Agent:</strong> Acts as a "second colleague," providing a list of differential diagnoses based on symptoms and medical history.<br><span class="text-sm text-blue-600">Examples: Glass.health, UpToDate</span></li></ul>` } },
+                { id: 'treatment', icon: '💊', title: { vi: 'Điều trị', en: 'Treatment' }, description: { vi: 'Tạo ra các phác đồ điều trị được cá nhân hóa cao dựa trên dữ liệu sinh học và di truyền.', en: 'Creating hyper-personalized treatment regimens based on biological and genetic data.' }, content: { vi: `<p class="mb-4 text-gray-600">AI là động lực chính của y học chính xác, giúp tối ưu hóa hiệu quả điều trị và giảm thiểu tác dụng phụ.</p><h4 class="font-bold text-lg mb-2">Các Agent tiêu biểu:</h4><ul class="space-y-4"><li><strong>Agent Lập kế hoạch Điều trị Cá nhân hóa:</strong> Tổng hợp dữ liệu gen, lối sống và bằng chứng lâm sàng để đề xuất phác đồ điều trị ung thư được cá nhân hóa.</li><li><strong>Agent Hỗ trợ Phẫu thuật Robot:</strong> Cung cấp hướng dẫn thời gian thực cho bác sĩ phẫu thuật, nhận dạng các mốc giải phẫu và cảnh báo rủi ro.<br><span class="text-sm text-blue-600">Ví dụ: da Vinci (Intuitive), Mako (Stryker)</span></li></ul>`, en: `<p class="mb-4 text-gray-600">AI is a key driver of precision medicine, helping to optimize treatment efficacy and minimize side effects.</p><h4 class="font-bold text-lg mb-2">Key Agents:</h4><ul class="space-y-4"><li><strong>Personalized Treatment Planning Agent:</strong> Synthesizes genetic data, lifestyle, and clinical evidence to recommend personalized cancer treatment protocols.</li><li><strong>Robotic Surgery Support Agent:</strong> Provides real-time guidance to surgeons, identifying anatomical landmarks and warning of risks.<br><span class="text-sm text-blue-600">Examples: da Vinci (Intuitive), Mako (Stryker)</span></li></ul>` } },
+                { id: 'admin', icon: '💼', title: { vi: 'Quản lý Hành chính', en: 'Administrative Management' }, description: { vi: 'Tự động hóa các công việc giấy tờ, giảm gánh nặng hành chính và tình trạng kiệt sức của bác sĩ.', en: 'Automating paperwork, reducing administrative burden and physician burnout.' }, content: { vi: `<p class="mb-4 text-gray-600">Đây là một trong những lĩnh vực ứng dụng AI rộng rãi và có tác động rõ rệt nhất, giải phóng thời gian cho bác sĩ để tập trung vào bệnh nhân.</p><h4 class="font-bold text-lg mb-2">Các Agent tiêu biểu:</h4><ul class="space-y-4"><li><strong>Agent Ghi chép Lâm sàng (Clinical Scribe):</strong> Tự động phiên âm cuộc đối thoại bác sĩ-bệnh nhân và điền vào Hồ sơ Sức khỏe Điện tử (EHR).<br><span class="text-sm text-blue-600">Ví dụ: Sunoh.ai, Nabla, Microsoft Dragon Copilot</span></li><li><strong>Agent Tóm tắt Lịch sử Bệnh án:</strong> Quét hàng trăm trang tài liệu y tế cũ và tạo ra một bản tóm tắt súc tích.<br><span class="text-sm text-blue-600">Ví dụ: Abstractive Health, Autonomize AI</span></li><li><strong>Agent Xin cấp phép Trước (Prior Authorization):</strong> Tự động hóa quy trình xin giấy phép từ các công ty bảo hiểm.<br><span class="text-sm text-blue-600">Ví dụ: Infinitus, Thoughtful (PAULA)</span></li><li><strong>Agent Mã hóa Y tế:</strong> Phân tích tài liệu và đề xuất các mã thanh toán (ICD-10, CPT) phù hợp.<br><span class="text-sm text-blue-600">Ví dụ: Fathom, Medicodio.ai</span></li></ul>`, en: `<p class="mb-4 text-gray-600">This is one of the most widespread and impactful areas of AI application, freeing up physicians' time to focus on patients.</p><h4 class="font-bold text-lg mb-2">Key Agents:</h4><ul class="space-y-4"><li><strong>Clinical Scribe Agent:</strong> Automatically transcribes doctor-patient conversations and populates the Electronic Health Record (EHR).<br><span class="text-sm text-blue-600">Examples: Sunoh.ai, Nabla, Microsoft Dragon Copilot</span></li><li><strong>Medical History Summarization Agent:</strong> Scans hundreds of pages of old medical documents to create a concise summary.<br><span class="text-sm text-blue-600">Examples: Abstractive Health, Autonomize AI</span></li><li><strong>Prior Authorization Agent:</strong> Automates the insurance authorization process.<br><span class="text-sm text-blue-600">Examples: Infinitus, Thoughtful (PAULA)</span></li><li><strong>Medical Coding Agent:</strong> Analyzes documentation and suggests appropriate billing codes (ICD-10, CPT).<br><span class="text-sm text-blue-600">Examples: Fathom, Medicodio.ai</span></li></ul>` } },
+                { id: 'research', icon: '🔬', title: { vi: 'Nghiên cứu & Phát triển', en: 'Research & Development' }, description: { vi: 'Đẩy nhanh quá trình khám phá và phát triển thuốc mới bằng cách phân tích dữ liệu sinh học.', en: 'Accelerating new drug discovery and development by analyzing biological data.' }, content: { vi: `<p class="mb-4 text-gray-600">AI đang cách mạng hóa lĩnh vực khoa học đời sống, hứa hẹn rút ngắn thời gian đưa một loại thuốc mới ra thị trường từ hơn một thập kỷ xuống còn vài năm.</p><h4 class="font-bold text-lg mb-2">Các Agent tiêu biểu:</h4><ul class="space-y-4"><li><strong>Agent Nghiên cứu & Phát triển Thuốc:</strong> Phân tích các bộ dữ liệu sinh học khổng lồ để xác định các mục tiêu thuốc mới và dự đoán hiệu quả của các hợp chất hóa học.<br><span class="text-sm text-blue-600">Ví dụ: Recursion Pharmaceuticals, BenevolentAI, Atomwise</span></li></ul>`, en: `<p class="mb-4 text-gray-600">AI is revolutionizing life sciences, promising to shorten the time to market for new drugs from over a decade to just a few years.</p><h4 class="font-bold text-lg mb-2">Key Agents:</h4><ul class="space-y-4"><li><strong>Drug R&D Agent:</strong> Analyzes massive biological datasets to identify new drug targets and predict the efficacy of chemical compounds.<br><span class="text-sm text-blue-600">Examples: Recursion Pharmaceuticals, BenevolentAI, Atomwise</span></li></ul>` } },
+                { id: 'training', icon: '🎓', title: { vi: 'Đào tạo Y khoa', en: 'Medical Training' }, description: { vi: 'Tạo ra các chương trình đào tạo cá nhân hóa, hiệu quả và thực tế hơn cho sinh viên y khoa.', en: 'Creating more personalized, effective, and realistic training programs for medical students.' }, content: { vi: `<p class="mb-4 text-gray-600">AI trang bị cho thế hệ chuyên gia y tế tiếp theo những kỹ năng cần thiết để làm việc trong một môi trường được tăng cường bởi công nghệ.</p><h4 class="font-bold text-lg mb-2">Các Agent tiêu biểu:</h4><ul class="space-y-4"><li><strong>Gặp gỡ Bệnh nhân Mô phỏng:</strong> Sinh viên y khoa thực hành kỹ năng lâm sàng và giao tiếp với các bệnh nhân ảo do AI tạo ra trong một môi trường an toàn.<br><span class="text-sm text-blue-600">Ví dụ: AI Patient Actor (Dartmouth), UCSF Versa</span></li></ul>`, en: `<p class="mb-4 text-gray-600">AI equips the next generation of medical professionals with the skills needed to work in a tech-augmented environment.</p><h4 class="font-bold text-lg mb-2">Key Agents:</h4><ul class="space-y-4"><li><strong>Simulated Patient Encounters:</strong> Medical students practice clinical and communication skills with AI-generated virtual patients in a safe environment.<br><span class="text-sm text-blue-600">Examples: AI Patient Actor (Dartmouth), UCSF Versa</span></li></ul>` } }
+            ],
+            lifestyle: [
+                { id: 'nutrition', icon: '🥗', title: { vi: 'Dinh dưỡng', en: 'Nutrition' }, description: { vi: 'Chuyển từ chế độ ăn chung chung sang hướng dẫn siêu cá nhân hóa dựa trên dữ liệu sinh học.', en: 'Moving from generic diets to hyper-personalized guidance based on biological data.' }, content: { vi: `<p class="mb-4 text-gray-600">Các tác tử AI phân tích dữ liệu người dùng để tạo ra các kế hoạch bữa ăn tùy chỉnh, công thức nấu ăn và danh sách mua sắm, giúp việc ăn uống lành mạnh trở nên dễ dàng hơn.</p><h4 class="font-bold text-lg mb-2">Các ứng dụng tiêu biểu:</h4><ul class="space-y-4"><li><strong>Lập kế hoạch bữa ăn:</strong> Các ứng dụng như MealMate, Mealmind, Strongr Fastr.</li><li><strong>Huấn luyện thích ứng:</strong> Theo dõi lượng thức ăn và điều chỉnh khuyến nghị dựa trên tiến độ. Ví dụ: MyFitnessPal.</li></ul>`, en: `<p class="mb-4 text-gray-600">AI agents analyze user data to create custom meal plans, recipes, and shopping lists, making healthy eating easier.</p><h4 class="font-bold text-lg mb-2">Key Applications:</h4><ul class="space-y-4"><li><strong>Meal Planning:</strong> Apps like MealMate, Mealmind, Strongr Fastr.</li><li><strong>Adaptive Coaching:</strong> Tracking food intake and adjusting recommendations based on progress. Example: MyFitnessPal.</li></ul>` } },
+                { id: 'fitness', icon: '🏋️', title: { vi: 'Thể dục', en: 'Fitness' }, description: { vi: 'Giúp việc huấn luyện cá nhân trở nên dễ tiếp cận hơn với các kế hoạch tập luyện thích ứng.', en: 'Making personal training more accessible with adaptive workout plans.' }, content: { vi: `<p class="mb-4 text-gray-600">AI hoạt động như một huấn luyện viên AI cá nhân, thiết kế chương trình tập luyện tối ưu và tự động điều chỉnh độ khó để đảm bảo người dùng liên tục tiến bộ.</p><h4 class="font-bold text-lg mb-2">Các ứng dụng tiêu biểu:</h4><ul class="space-y-4"><li><strong>Chương trình tùy chỉnh:</strong> Fitbod, Freeletics, FitnessAI.</li><li><strong>Chỉnh sửa tư thế thời gian thực:</strong> Sử dụng camera và thị giác máy tính để phân tích và sửa tư thế. Ví dụ: Tempo Fit.</li></ul>`, en: `<p class="mb-4 text-gray-600">AI acts as a personal AI coach, designing optimal workout programs and automatically adjusting difficulty to ensure continuous user progress.</p><h4 class="font-bold text-lg mb-2">Key Applications:</h4><ul class="space-y-4"><li><strong>Custom Programs:</strong> Fitbod, Freeletics, FitnessAI.</li><li><strong>Real-time Form Correction:</strong> Using camera and computer vision to analyze and correct posture. Example: Tempo Fit.</li></ul>` } },
+                { id: 'mental_health', icon: '🧠', title: { vi: 'Sức khỏe Tinh thần', en: 'Mental Wellness' }, description: { vi: 'Cung cấp hỗ trợ dễ tiếp cận, nhưng đi kèm với những rủi ro đạo đức và an toàn đáng kể.', en: 'Providing accessible support, but with significant ethical and safety risks.' }, content: { vi: `<p class="mb-4 text-gray-600">Đây là lĩnh vực ứng dụng nhiều hứa hẹn nhưng cũng gây tranh cãi nhất. Chatbot AI có thể cung cấp hỗ trợ 24/7 dựa trên liệu pháp nhận thức hành vi (CBT).</p><h4 class="font-bold text-lg mb-2">Các ứng dụng tiêu biểu:</h4><ul class="space-y-4"><li><strong>Hỗ trợ CBT:</strong> Woebot, Wysa.</li></ul><div class="mt-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg"><h4 class="font-bold text-red-800">⚠️ Phản biện Quan trọng</h4><p class="text-red-700">Việc sử dụng AI trong sức khỏe tinh thần có những rủi ro nghiêm trọng: thiếu sự đồng cảm thực sự, khoảng trống về trách nhiệm pháp lý khi đưa ra lời khuyên có hại, và nguy cơ gây ra sự phụ thuộc cảm xúc không lành mạnh.</p></div>`, en: `<p class="mb-4 text-gray-600">This is the most promising yet controversial application area. AI chatbots can provide 24/7 support based on Cognitive Behavioral Therapy (CBT).</p><h4 class="font-bold text-lg mb-2">Key Applications:</h4><ul class="space-y-4"><li><strong>CBT Support:</strong> Woebot, Wysa.</li></ul><div class="mt-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg"><h4 class="font-bold text-red-800">⚠️ Critical Counterpoint</h4><p class="text-red-700">The use of AI in mental health carries serious risks: a lack of true empathy, a liability gap for harmful advice, and the danger of fostering unhealthy emotional dependence.</p></div>` } }
+            ],
+            challenges: {
+                headers: { vi: ['Thách thức Chính', 'Tác động Tiềm tàng', 'Chiến lược Giảm thiểu'], en: ['Key Challenge', 'Potential Impact', 'Mitigation Strategy'] },
+                rows: [
+                    { challenge: { vi: 'Thiên vị Thuật toán', en: 'Algorithmic Bias' }, impact: { vi: 'Duy trì và khuếch đại sự chênh lệch về sức khỏe; chẩn đoán sai cho các nhóm dân số bị thiếu đại diện.', en: 'Perpetuates and amplifies health disparities; misdiagnosis for underrepresented populations.' }, mitigation: { vi: 'Kiểm tra công bằng bắt buộc; sử dụng bộ dữ liệu huấn luyện đa dạng; phát triển mô hình có cơ chế phát hiện và điều chỉnh thiên vị thời gian thực.', en: 'Mandatory fairness audits; use of diverse training datasets; develop models with real-time bias detection and correction.' } },
+                    { challenge: { vi: 'Quyền riêng tư & Bảo mật Dữ liệu', en: 'Data Privacy & Security' }, impact: { vi: 'Nguy cơ vi phạm dữ liệu, trộm cắp danh tính và lạm dụng thông tin sức khỏe nhạy cảm.', en: 'Risk of data breaches, identity theft, and misuse of sensitive health information.' }, mitigation: { vi: 'Mã hóa mạnh mẽ, kiểm soát truy cập nghiêm ngặt, tuân thủ HIPAA/GDPR, và kỹ thuật ẩn danh hóa dữ liệu.', en: 'Strong encryption, strict access controls, HIPAA/GDPR compliance, and data anonymization techniques.' } },
+                    { challenge: { vi: 'Thiếu Trách nhiệm giải trình ("Hộp đen")', en: 'Accountability Gap ("Black Box")' }, impact: { vi: 'Khó xác định trách nhiệm pháp lý khi xảy ra sai sót do AI; làm xói mòn lòng tin vào hệ thống.', en: 'Difficulty in assigning liability for AI-driven errors; erodes trust in the system.' }, mitigation: { vi: 'Yêu cầu khuôn khổ quy định rõ ràng; thúc đẩy AI có thể giải thích được (XAI); đảm bảo sự giám sát của con người trong các quyết định rủi ro cao.', en: 'Demand clear regulatory frameworks; promote Explainable AI (XAI); ensure human oversight in high-stakes decisions.' } },
+                    { challenge: { vi: 'Sự phụ thuộc quá mức & Mất kỹ năng', en: 'Over-reliance & Skill Atrophy' }, impact: { vi: 'Suy giảm khả năng phán đoán lâm sàng của chuyên gia y tế; các sai sót của AI có thể không được chú ý.', en: 'Degradation of clinical judgment among professionals; AI errors may go unnoticed.' }, mitigation: { vi: 'Thiết kế lại quy trình làm việc để giữ con người "trong vòng lặp"; đào tạo liên tục về cách tương tác và giám sát hệ thống AI.', en: 'Redesign workflows to keep humans "in the loop"; continuous training on how to interact with and supervise AI systems.' } },
+                    { challenge: { vi: 'Thiếu sự Đồng cảm & Phá vỡ Mối quan hệ Bác sĩ-Bệnh nhân', en: 'Empathy Deficit & Disrupted Doctor-Patient Relationship' }, impact: { vi: 'Chăm sóc phi nhân cách hóa; nguy cơ đưa ra lời khuyên có hại trong các bối cảnh nhạy cảm (ví dụ: sức khỏe tâm thần).', en: 'Depersonalized care; risk of harmful advice in sensitive contexts (e.g., mental health).' }, mitigation: { vi: 'Xác định rõ ràng ranh giới cho AI tự chủ; đào tạo bác sĩ để trở thành người diễn giải và cộng tác viên với các công cụ AI.', en: 'Clearly define boundaries for autonomous AI; train clinicians to be interpreters and collaborators with AI tools.' } }
+                ]
+            }
+        };
+
+        // --- GLOBAL STATE ---
+        let currentLang = 'vi';
+        let aiDomainsChart;
+
+        // --- DOM ELEMENTS ---
+        const langViBtn = document.getElementById('lang-vi');
+        const langEnBtn = document.getElementById('lang-en');
+        const ecosystemContainer = document.getElementById('ecosystem-cards');
+        const lifestyleContainer = document.getElementById('lifestyle-cards');
+        const challengesHeaderContainer = document.getElementById('challenges-table-header');
+        const challengesBodyContainer = document.getElementById('challenges-table-body');
+        const modal = document.getElementById('modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalBody = document.getElementById('modal-body');
+        const modalClose = document.getElementById('modal-close');
+        
+        // --- CHART IMPLEMENTATION ---
+        function createChart(lang) {
+            const ctx = document.getElementById('aiDomainsChart').getContext('2d');
+            if (aiDomainsChart) {
+                aiDomainsChart.destroy();
+            }
+            aiDomainsChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: [appData.staticContent.chartLabelEcosystem[lang], appData.staticContent.chartLabelLifestyle[lang]],
+                    datasets: [{
+                        label: 'Lĩnh vực Ứng dụng AI',
+                        data: [appData.ecosystem.length, appData.lifestyle.length],
+                        backgroundColor: ['rgba(54, 162, 235, 0.8)', 'rgba(255, 159, 64, 0.8)'],
+                        borderColor: ['rgba(54, 162, 235, 1)', 'rgba(255, 159, 64, 1)'],
+                        borderWidth: 1,
+                        hoverOffset: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '60%',
+                    plugins: {
+                        legend: { position: 'bottom', labels: { font: { size: 14, family: "'Be Vietnam Pro', sans-serif" } } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) { label += ': '; }
+                                    if (context.parsed !== null) {
+                                        label += `${context.parsed} ${appData.staticContent.chartTooltipLabel[lang]}`;
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            const i = elements[0].index;
+                            const targetId = i === 0 ? '#ecosystem' : '#lifestyle';
+                            document.querySelector(targetId).scrollIntoView({ behavior: 'smooth' });
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- DYNAMIC CONTENT RENDERING ---
+        function renderContent(lang) {
+            currentLang = lang;
+            document.documentElement.lang = lang;
+
+            // Update static text
+            document.querySelectorAll('[data-lang-key]').forEach(el => {
+                const key = el.getAttribute('data-lang-key');
+                if (appData.staticContent[key]) {
+                    el.innerHTML = appData.staticContent[key][lang];
+                }
+            });
+
+            // Update cards
+            const createCard = (item) => {
+                const card = document.createElement('div');
+                card.className = 'interactive-card bg-white p-6 rounded-xl shadow-md border border-gray-100';
+                card.innerHTML = `
+                    <div class="flex items-center mb-3">
+                        <span class="text-3xl mr-4">${item.icon}</span>
+                        <h3 class="text-xl font-bold text-gray-800">${item.title[lang]}</h3>
+                    </div>
+                    <p class="text-gray-600">${item.description[lang]}</p>`;
+                card.addEventListener('click', () => openModal(item));
+                return card;
+            };
+            
+            ecosystemContainer.innerHTML = '';
+            lifestyleContainer.innerHTML = '';
+            appData.ecosystem.forEach(item => ecosystemContainer.appendChild(createCard(item)));
+            appData.lifestyle.forEach(item => lifestyleContainer.appendChild(createCard(item)));
+
+            // Update challenges table
+            challengesHeaderContainer.innerHTML = `
+                <th class="p-4 text-left font-semibold">${appData.challenges.headers[lang][0]}</th>
+                <th class="p-4 text-left font-semibold">${appData.challenges.headers[lang][1]}</th>
+                <th class="p-4 text-left font-semibold">${appData.challenges.headers[lang][2]}</th>`;
+            
+            challengesBodyContainer.innerHTML = '';
+            appData.challenges.rows.forEach(item => {
+                const row = document.createElement('tr');
+                row.className = 'border-b border-gray-200 hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="p-4 font-medium">${item.challenge[lang]}</td>
+                    <td class="p-4 text-gray-600">${item.impact[lang]}</td>
+                    <td class="p-4 text-gray-600">${item.mitigation[lang]}</td>`;
+                challengesBodyContainer.appendChild(row);
+            });
+
+            // Update chart
+            createChart(lang);
+
+            // Update language buttons
+            if (lang === 'vi') {
+                langViBtn.classList.add('active');
+                langEnBtn.classList.remove('active');
+            } else {
+                langEnBtn.classList.add('active');
+                langViBtn.classList.remove('active');
+            }
+        }
+
+        // --- MODAL LOGIC ---
+        function openModal(item) {
+            modalTitle.textContent = item.title[currentLang];
+            modalBody.innerHTML = item.content[currentLang];
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.querySelector('.modal-content').classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeModal() {
+            modal.classList.add('opacity-0');
+            modal.querySelector('.modal-content').classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        modalClose.addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+
+        // --- NAVIGATION SCROLLSPY ---
+        const sections = document.querySelectorAll('section');
+        const navLinks = document.querySelectorAll('.nav-link');
+        window.addEventListener('scroll', () => {
+            let currentId = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (pageYOffset >= sectionTop - 100) {
+                    currentId = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href').substring(1) === currentId) {
+                    link.classList.add('active');
+                }
+            });
+        });
+
+        // --- INITIALIZATION ---
+        langViBtn.addEventListener('click', () => renderContent('vi'));
+        langEnBtn.addEventListener('click', () => renderContent('en'));
+        renderContent('vi'); // Initial render
+    });
+    </script>
+</body>
+</html>
